@@ -228,9 +228,9 @@ export default function App() {
 
         {/* ── Axis Legend ── */}
         <div style={styles.axisLegend}>
-          <LegendItem color="#ef4444" label="Y축: L* (밝기)" />
-          <LegendItem color="#22c55e" label="X축: a* (녹 ↔ 적)" />
-          <LegendItem color="#3b82f6" label="Z축: b* (청 ↔ 황)" />
+          <LegendItem color="#f1f5f9" label="Y축: L* (밝기)" />
+          <LegendItem color="#f87171" label="X+ a* → Red" secondColor="#4ade80" secondLabel="X− → Green" />
+          <LegendItem color="#facc15" label="Z+ b* → Yellow" secondColor="#60a5fa" secondLabel="Z− → Blue" />
           <div style={styles.hint}>드래그: 회전 · 휠: 줌 · 클릭: 선택</div>
         </div>
 
@@ -268,6 +268,7 @@ export default function App() {
             onToneToggle={toggleTone}
             onToggleAll={toggleAllTones}
             onSelectColor={handleSelect}
+            onClose={() => setSidebarOpen(false)}
           />
         </div>
       )}
@@ -292,7 +293,22 @@ function ToggleBtn({ active, onClick, title, children }) {
   )
 }
 
-function LegendItem({ color, label }) {
+function LegendItem({ color, label, secondColor, secondLabel }) {
+  if (secondColor) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{ width: 12, height: 2, background: secondColor, borderRadius: 1 }} />
+        <div style={{ width: 12, height: 2, background: color, borderRadius: 1 }} />
+        <span style={{ fontSize: 10, color: '#64748b', letterSpacing: '0.03em' }}>
+          <span style={{ color: secondColor }}>{secondLabel.split('→')[1]?.trim()}</span>
+          {' ← '}
+          <span style={{ color: '#94a3b8' }}>{label.split(' ')[1]}</span>
+          {' → '}
+          <span style={{ color }}>{label.split('→')[1]?.trim()}</span>
+        </span>
+      </div>
+    )
+  }
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
       <div style={{ width: 24, height: 2, background: color, borderRadius: 1 }} />

@@ -5,7 +5,7 @@ const ALL_HUES = ['R', 'YR', 'Y', 'GY', 'G', 'BG', 'B', 'PB', 'P', 'RP']
 
 export default function SidePanel({
   data, allData, selected, activeTones, searchQuery, lang,
-  onSearchChange, onToneToggle, onToggleAll, onSelectColor,
+  onSearchChange, onToneToggle, onToggleAll, onSelectColor, onClose,
 }) {
   const toneList = Object.entries(TONE_INFO)
 
@@ -27,7 +27,12 @@ export default function SidePanel({
       {/* Header */}
       <div style={styles.header}>
         <div style={styles.headerTitle}>색상 목록</div>
-        <div style={styles.countBadge}>{totalVisible}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={styles.countBadge}>{totalVisible}</div>
+          {onClose && (
+            <button onClick={onClose} style={styles.closeBtn} title="닫기">✕</button>
+          )}
+        </div>
       </div>
 
       {/* Search */}
@@ -86,7 +91,10 @@ export default function SidePanel({
           if (!items || items.length === 0) return null
           return (
             <div key={hue}>
-              <div style={styles.hueHeader}>{hue}</div>
+              <div style={styles.hueHeader}>
+                <span>{hue}</span>
+                <span style={styles.hueCount}>{items.length}</span>
+              </div>
               {items.map(c => (
                 <ColorRow
                   key={c.id}
@@ -147,6 +155,7 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'space-between',
     borderBottom: '1px solid rgba(255,255,255,0.06)',
+    flexShrink: 0,
   },
   headerTitle: {
     fontSize: 13,
@@ -161,6 +170,21 @@ const styles = {
     padding: '2px 8px',
     borderRadius: 20,
     fontWeight: 600,
+  },
+  closeBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 7,
+    background: 'rgba(255,255,255,0.06)',
+    border: '1px solid rgba(255,255,255,0.1)',
+    color: '#94a3b8',
+    fontSize: 12,
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontFamily: 'inherit',
+    flexShrink: 0,
   },
   searchWrap: {
     margin: '12px 12px 0',
@@ -266,6 +290,20 @@ const styles = {
     textTransform: 'uppercase',
     letterSpacing: '0.08em',
     fontWeight: 700,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  hueCount: {
+    fontSize: 10,
+    color: '#475569',
+    background: 'rgba(255,255,255,0.05)',
+    border: '1px solid rgba(255,255,255,0.08)',
+    borderRadius: 10,
+    padding: '1px 6px',
+    fontWeight: 600,
+    letterSpacing: 0,
+    fontVariantNumeric: 'tabular-nums',
   },
   colorRow: {
     width: '100%',

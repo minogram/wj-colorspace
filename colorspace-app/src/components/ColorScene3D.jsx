@@ -31,7 +31,7 @@ function ColorSphere({ item, isSelected, isHovered, onSelect, onHover, scale = 1
   return (
     <mesh
       ref={meshRef}
-      position={[item.a, item.l - 50, item.b]}
+      position={[item.a, item.l - 50, -item.b]}
       onClick={(e) => { e.stopPropagation(); onSelect(item) }}
       onPointerEnter={(e) => { e.stopPropagation(); setLocalHover(true); onHover(item) }}
       onPointerLeave={(e) => { e.stopPropagation(); setLocalHover(false); onHover(null) }}
@@ -56,27 +56,23 @@ function AxisSystem({ show }) {
 
   return (
     <group>
-      {/* L* axis (Y) - Red */}
-      <Line points={[[0, -len + offset, 0], [0, len + offset, 0]]} color="#ef4444" lineWidth={1.5} opacity={0.6} transparent />
-      <Text position={[0, len + offset + 10, 0]} fontSize={5} color="#ef4444" anchorX="center" font={undefined}>L*</Text>
-      <Text position={[0, -len + offset - 10, 0]} fontSize={3.5} color="#ef4444" anchorX="center" font={undefined}>0</Text>
-      <Text position={[0, len + offset + 2, 0]} fontSize={3.5} color="#ef4444" anchorX="center" font={undefined}>100</Text>
+      {/* L* axis (Y) - White line, white label */}
+      <Line points={[[0, -len + offset, 0], [0, len + offset, 0]]} color="#ffffff" lineWidth={1.5} opacity={0.5} transparent />
+      <Text position={[0, len + offset + 10, 0]} fontSize={5} color="#f1f5f9" anchorX="center" font={undefined}>L*</Text>
+      <Text position={[0, -len + offset - 10, 0]} fontSize={3.5} color="#94a3b8" anchorX="center" font={undefined}>0</Text>
+      <Text position={[0, len + offset + 2, 0]} fontSize={3.5} color="#94a3b8" anchorX="center" font={undefined}>100</Text>
 
-      {/* a* axis (X) - Green */}
-      <Line points={[[-len, 0, 0], [len, 0, 0]]} color="#22c55e" lineWidth={1.5} opacity={0.6} transparent />
-      <Text position={[len + 10, 0, 0]} fontSize={5} color="#22c55e" anchorX="center" font={undefined}>a*</Text>
-      <Text position={[-len - 8, 0, 0]} fontSize={3.5} color="#22c55e" anchorX="center" font={undefined}>G</Text>
-      <Text position={[len + 8, 0, 3]} fontSize={3.5} color="#22c55e" anchorX="center" font={undefined}>R</Text>
+      {/* a* axis (X) - White line, G=green / R=red labels */}
+      <Line points={[[-len, 0, 0], [len, 0, 0]]} color="#ffffff" lineWidth={1.5} opacity={0.5} transparent />
+      <Text position={[len + 12, 0, 0]} fontSize={5} color="#f1f5f9" anchorX="center" font={undefined}>a*</Text>
+      <Text position={[-len - 8, 0, 0]} fontSize={4} color="#4ade80" anchorX="center" font={undefined}>G</Text>
+      <Text position={[len + 8, 0, 0]} fontSize={4} color="#f87171" anchorX="center" font={undefined}>R</Text>
 
-      {/* b* axis (Z) - Blue */}
-      <Line points={[[0, 0, -len], [0, 0, len]]} color="#3b82f6" lineWidth={1.5} opacity={0.6} transparent />
-      <Text position={[0, 0, len + 10]} fontSize={5} color="#3b82f6" anchorX="center" font={undefined}>b*</Text>
-      <Text position={[0, 0, -len - 8]} fontSize={3.5} color="#3b82f6" anchorX="center" font={undefined}>B</Text>
-      <Text position={[0, 0, len + 8]} fontSize={3.5} color="#3b82f6" anchorX="center" font={undefined}>Y</Text>
-
-      {/* Center cross lines (faint) */}
-      <Line points={[[-len, 0, 0], [len, 0, 0]]} color="#1e293b" lineWidth={0.5} opacity={0.3} transparent />
-      <Line points={[[0, 0, -len], [0, 0, len]]} color="#1e293b" lineWidth={0.5} opacity={0.3} transparent />
+      {/* b* axis (Z) - White line, -Z=Yellow(+b*) / +Z=Blue(-b*) */}
+      <Line points={[[0, 0, -len], [0, 0, len]]} color="#ffffff" lineWidth={1.5} opacity={0.5} transparent />
+      <Text position={[0, 0, len + 12]} fontSize={5} color="#f1f5f9" anchorX="center" font={undefined}>b*</Text>
+      <Text position={[0, 0, -len - 8]} fontSize={4} color="#facc15" anchorX="center" font={undefined}>Y</Text>
+      <Text position={[0, 0, len + 8]} fontSize={4} color="#60a5fa" anchorX="center" font={undefined}>B</Text>
     </group>
   )
 }
@@ -94,7 +90,7 @@ function HoverLabel({ item, lang }) {
   if (!item) return null
   const name = lang === 'ko' ? item.nameKo : item.nameEn
   return (
-    <group position={[item.a, item.l - 50 + 8, item.b]}>
+    <group position={[item.a, item.l - 50 + 8, -item.b]}>
       <Text
         fontSize={4}
         color="white"
