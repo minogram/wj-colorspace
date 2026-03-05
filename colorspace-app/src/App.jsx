@@ -120,6 +120,8 @@ export default function App() {
           <div style={mStyles.copyright}>
             <div>Copyright 2026 WJ International</div>
             <div>samchun68@naver.com</div>
+            <div>uttu.me</div>
+            <div>Open Fashion Alliance</div>
           </div>
           {activeHues && !selectedColor && (
             <button style={mStyles.clearBadge} onClick={() => setActiveHues(null)}>
@@ -238,6 +240,8 @@ export default function App() {
         <div style={styles.copyright}>
           <div>Copyright 2026 WJ International</div>
           <div>samchun68@naver.com</div>
+          <div>uttu.me</div>
+          <div>Open Fashion Alliance</div>
         </div>
 
         {/* ── Color Detail Panel (bottom-right) ── */}

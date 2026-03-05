@@ -18,7 +18,7 @@
     "url": "https://github.com/minogram/wj-colorspace/issues"
   },
   "homepage": "https://github.com/minogram/wj-colorspace#readme",
-  "dependencies": {
-    "xlsx": "^0.18.5"
+  "devDependencies": {
+    "exceljs": "^4.4.0"
   }
 }
