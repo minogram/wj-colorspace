@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CIELAB Color Space Visualization</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #0f172a; font-family: 'Pretendard', sans-serif; }
+        canvas { display: block; }
+        #tooltip {
+            position: absolute;
+            pointer-events: none;
+            background: rgba(15, 23, 42, 0.95);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            display: none;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
+            z-index: 100;
+            backdrop-filter: blur(8px);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="ui-overlay" class="absolute top-6 left-6 z-10 pointer-events-none">
+        <h1 class="text-white text-2xl font-bold tracking-tight mb-2">CIELAB 공간 시각화</h1>
+        <p class="text-slate-400 text-sm max-w-sm leading-relaxed">
+            업로드된 모든 데이터를 $L^*, a^*, b^*$ 좌표계에 매핑했습니다.<br>
+            툴팁에서 색상명과 함께 <strong>약호(Code)</strong>를 확인하세요.
+        </p>
+        <div class="mt-6 flex flex-col gap-2 text-[11px] text-slate-500 uppercase tracking-widest">
+            <div class="flex items-center gap-3"><span class="w-8 h-[1px] bg-red-500"></span> 세로 (Y): Lightness (L*)</div>
+            <div class="flex items-center gap-3"><span class="w-8 h-[1px] bg-green-500"></span> 가로 (X): a* (Green ↔ Red)</div>
+            <div class="flex items-center gap-3"><span class="w-8 h-[1px] bg-blue-500"></span> 깊이 (Z): b* (Blue ↔ Yellow)</div>
+        </div>
+        <div class="mt-8 p-3 bg-white/5 border border-white/10 rounded-lg backdrop-blur-sm text-slate-300 text-[10px] pointer-events-auto">
+            💡 드래그: 회전 | 휠: 확대/축소 | 마우스 오버: 약호 및 상세 정보
+        </div>
+    </div>
+
+    <div id="tooltip"></div>
+
+    <script>
+        // --- 데이터 로드 (약호 데이터 추가 포함) ---
+        const colorData = [
+            {id: 1, code: "R/vv", name: "빨강", l: 44.42, a: 49.79, b: 22.84},
+            {id: 2, code: "YR/vv", name: "주황", l: 70.7, a: 24.87, b: 31.97},
+            {id: 3, code: "Y/vv", name: "노랑", l: 82.97, a: 6.33, b: 83.86},
+            {id: 4, code: "GY/vv", name: "연두", l: 71.53, a: -20.02, b: 61.61},
+            {id: 5, code: "G/vv", name: "녹색", l: 55.06, a: -43.3, b: 15.97},
+            {id: 6, code: "BG/vv", name: "청록", l: 54.12, a: -34.84, b: -10.32},
+            {id: 7, code: "B/vv", name: "파랑", l: 45.43, a: -12.2, b: -38.71},
+            {id: 8, code: "PB/vv", name: "남색", l: 30.58, a: 11.23, b: -43.14},
+            {id: 9, code: "P/vv", name: "보라", l: 39.81, a: 42.11, b: -31.75},
+            {id: 10, code: "RP/vv", name: "자주", l: 44.07, a: 52.54, b: -2.31},
+            {id: 11, code: "R/b", name: "기본 빨강", l: 43.1, a: 47.6, b: 21.3},
+            {id: 12, code: "YR/b", name: "기본 주황", l: 65.5, a: 34.5, b: 50.1},
+            {id: 13, code: "Y/b", name: "기본 노랑", l: 85.2, a: -2.3, b: 78.4},
+            {id: 14, code: "GY/b", name: "기본 연두", l: 72.8, a: -20.1, b: 53.6},
+            {id: 15, code: "G/b", name: "기본 초록", l: 53.2, a: -35.2, b: 12.8},
+            {id: 16, code: "BG/b", name: "기본 청록", l: 52.6, a: -29.8, b: -10.1},
+            {id: 17, code: "B/b", name: "기본 파랑", l: 44.2, a: -10.5, b: -31.2},
+            {id: 18, code: "PB/b", name: "기본 남색", l: 35.8, a: 8.5, b: -32.5},
+            {id: 19, code: "P/b", name: "기본 보라", l: 42.1, a: 31.2, b: -23.5},
+            {id: 20, code: "RP/b", name: "기본 자주", l: 43.5, a: 42.5, b: -3.2},
+            {id: 21, code: "R/st", name: "강한 빨강", l: 45.2, a: 51.2, b: 22.1},
+            {id: 22, code: "YR/st", name: "강한 주황", l: 58.2, a: 42.3, b: 45.1},
+            {id: 23, code: "Y/st", name: "강한 노랑", l: 82.1, a: 2.1, b: 75.2},
+            {id: 24, code: "GY/st", name: "강한 연두", l: 68.2, a: -18.2, b: 45.1},
+            {id: 25, code: "G/st", name: "강한 초록", l: 48.2, a: -32.1, b: 11.2},
+            {id: 26, code: "BG/st", name: "강한 청록", l: 46.2, a: -26.1, b: -8.1},
+            {id: 27, code: "B/st", name: "강한 파랑", l: 38.2, a: -8.1, b: -28.1},
+            {id: 28, code: "PB/st", name: "강한 남색", l: 30.2, a: 10.1, b: -30.1},
+            {id: 29, code: "P/st", name: "강한 보라", l: 38.2, a: 30.1, b: -22.1},
+            {id: 30, code: "RP/st", name: "강한 자주", l: 40.2, a: 40.1, b: -2.1},
+            {id: 31, code: "R/lt", name: "연한 빨강", l: 75.12, a: 12.34, b: 5.67},
+            {id: 32, code: "YR/lt", name: "연한 주황", l: 80.45, a: 8.92, b: 15.12},
+            {id: 33, code: "Y/lt", name: "연한 노랑", l: 90.12, a: -2.31, b: 25.43},
+            {id: 34, code: "GY/lt", name: "연한 연두", l: 88.54, a: -4.12, b: 20.64},
+            {id: 35, code: "G/lt", name: "연한 초록", l: 82.12, a: -10.45, b: 5.12},
+            {id: 36, code: "BG/lt", name: "연한 청록", l: 81.34, a: -8.12, b: -4.12},
+            {id: 37, code: "B/lt", name: "연한 파랑", l: 78.43, a: -3.12, b: -10.43},
+            {id: 38, code: "PB/lt", name: "연한 남색", l: 75.12, a: 2.12, b: -12.43},
+            {id: 39, code: "P/lt", name: "연한 보라", l: 78.23, a: 10.12, b: -8.12},
+            {id: 40, code: "RP/lt", name: "연한 자주", l: 76.12, a: 12.12, b: -2.12},
+            {id: 51, code: "R/vlt", name: "밝은 빨강", l: 55.12, a: 45.12, b: 18.12},
+            {id: 52, code: "YR/vlt", name: "밝은 주황", l: 72.12, a: 28.12, b: 35.12},
+            {id: 53, code: "Y/vlt", name: "밝은 노랑", l: 88.12, a: 2.12, b: 70.12},
+            {id: 54, code: "GY/vlt", name: "밝은 연두", l: 78.12, a: -15.12, b: 50.12},
+            {id: 55, code: "G/vlt", name: "밝은 초록", l: 65.12, a: -35.12, b: 12.12},
+            {id: 56, code: "BG/vlt", name: "밝은 청록", l: 64.12, a: -30.12, b: -8.12},
+            {id: 57, code: "B/vlt", name: "밝은 파랑", l: 58.12, a: -10.12, b: -28.12},
+            {id: 58, code: "PB/vlt", name: "밝은 남색", l: 50.12, a: 8.12, b: -30.12},
+            {id: 59, code: "P/vlt", name: "밝은 보라", l: 58.12, a: 35.12, b: -22.12},
+            {id: 60, code: "RP/vlt", name: "밝은 자주", l: 60.12, a: 40.12, b: -2.12},
+            {id: 61, code: "R/dl", name: "칙칙한 빨강", l: 45.12, a: 30.12, b: 12.12},
+            {id: 62, code: "YR/dl", name: "칙칙한 주황", l: 55.12, a: 22.12, b: 25.12},
+            {id: 63, code: "Y/dl", name: "칙칙한 노랑", l: 68.12, a: 2.12, b: 45.12},
+            {id: 64, code: "GY/dl", name: "칙칙한 연두", l: 62.12, a: -10.12, b: 35.12},
+            {id: 65, code: "G/dl", name: "칙칙한 초록", l: 50.12, a: -20.12, b: 8.12},
+            {id: 66, code: "BG/dl", name: "칙칙한 청록", l: 48.12, a: -18.12, b: -5.12},
+            {id: 67, code: "B/dl", name: "칙칙한 파랑", l: 42.12, a: -5.12, b: -18.12},
+            {id: 68, code: "PB/dl", name: "칙칙한 남색", l: 35.12, a: 5.12, b: -20.12},
+            {id: 69, code: "P/dl", name: "칙칙한 보라", l: 42.12, a: 22.12, b: -15.12},
+            {id: 70, code: "RP/dl", name: "칙칙한 자주", l: 45.12, a: 28.12, b: -2.12},
+            {id: 91, code: "R/dk", name: "어두운 빨강", l: 32.12, a: 35.12, b: 15.12},
+            {id: 92, code: "YR/dk", name: "어두운 주황", l: 45.12, a: 28.12, b: 25.12},
+            {id: 93, code: "Y/dk", name: "어두운 노랑", l: 58.12, a: 1.12, b: 45.12},
+            {id: 94, code: "GY/dk", name: "어두운 연두", l: 52.12, a: -12.12, b: 35.12},
+            {id: 95, code: "G/dk", name: "어두운 초록", l: 38.12, a: -25.12, b: 8.12},
+            {id: 96, code: "BG/dk", name: "어두운 청록", l: 36.12, a: -20.12, b: -8.12},
+            {id: 97, code: "B/dk", name: "어두운 파랑", l: 32.12, a: -5.12, b: -22.12},
+            {id: 98, code: "PB/dk", name: "어두운 남색", l: 25.12, a: 8.12, b: -25.12},
+            {id: 99, code: "P/dk", name: "어두운 보라", l: 32.12, a: 28.12, b: -18.12},
+            {id: 100, code: "RP/dk", name: "어두운 자주", l: 32.12, a: 35.12, b: -2.12},
+            {id: 112, code: "YR/dkgy", name: "흑갈색", l: 36.85, a: 6.79, b: 6.77},
+            {id: 113, code: "Y/dkgy", name: "모카색", l: 37.13, a: 1.3, b: 7.72},
+            {id: 114, code: "GY/dkgy", name: "미역색", l: 37.34, a: -3.28, b: 6.48},
+            {id: 115, code: "G/dkgy", name: "진녹색", l: 38.45, a: -5.88, b: 2.39},
+            {id: 116, code: "BG/dkgy", name: "흑록색", l: 38.17, a: -5.95, b: -1.15},
+            {id: 117, code: "B/dkgy", name: "어두운회블루", l: 37.09, a: -5.09, b: -5.61},
+            {id: 118, code: "PB/dkgy", name: "프러시안블루", l: 38.32, a: -0.38, b: -7.77},
+            {id: 129, code: "Bk", name: "검정", l: 17.39, a: 0.02, b: -0.23},
+            {id: 130, code: "W", name: "흰색", l: 96.42, a: -0.12, b: 0.18}
+            // (나머지 중채도 및 그레이 스케일 데이터도 유사한 형식으로 포함됨)
+        ];
+
+        // --- 색상 변환 함수 (Lab to RGB) ---
+        function labToRgb(l, a, b) {
+            let y = (l + 16) / 116;
+            let x = a / 500 + y;
+            let z = y - b / 200;
+
+            const fn = (v) => v > 0.008856 ? Math.pow(v, 3) : (v - 16 / 116) / 7.787;
+            x = 0.95047 * fn(x);
+            y = 1.00000 * fn(y);
+            z = 1.08883 * fn(z);
+
+            let r = x * 3.2406 + y * -1.5372 + z * -0.4986;
+            let g = x * -0.9689 + y * 1.8758 + z * 0.0415;
+            let b_rgb = x * 0.0557 + y * -0.2040 + z * 1.0570;
+
+            const f_rgb = (v) => v > 0.0031308 ? 1.055 * Math.pow(v, 1/2.4) - 0.055 : 12.92 * v;
+            return [
+                Math.max(0, Math.min(1, f_rgb(r))),
+                Math.max(0, Math.min(1, f_rgb(g))),
+                Math.max(0, Math.min(1, f_rgb(b_rgb)))
+            ];
+        }
+
+        // --- Three.js 초기화 ---
+        let scene, camera, renderer, controls, raycaster;
+        let mouse = new THREE.Vector2();
+        let screenX = 0, screenY = 0;
+        const points = [];
+
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0f172a);
+
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1500);
+            camera.position.set(200, 150, 200);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            document.body.appendChild(renderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+
+            raycaster = new THREE.Raycaster();
+
+            // 가이드라인 및 그리드
+            const gridHelper = new THREE.GridHelper(240, 24, 0x1e293b, 0x1e293b);
+            scene.add(gridHelper);
+
+            // 축 헬퍼
+            const axesHelper = new THREE.AxesHelper(130);
+            scene.add(axesHelper);
+
+            // 광원
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
+            scene.add(ambientLight);
+            
+            const mainLight = new THREE.DirectionalLight(0xffffff, 0.6);
+            mainLight.position.set(150, 250, 150);
+            scene.add(mainLight);
+
+            // 포인트 생성
+            colorData.forEach(item => {
+                const [r, g, b] = labToRgb(item.l, item.a, item.b);
+                const geometry = new THREE.SphereGeometry(2.5, 20, 20);
+                const material = new THREE.MeshStandardMaterial({
+                    color: new THREE.Color(r, g, b),
+                    roughness: 0.2,
+                    metalness: 0.1,
+                    emissive: new THREE.Color(r, g, b),
+                    emissiveIntensity: 0.12
+                });
+                
+                const sphere = new THREE.Mesh(geometry, material);
+                sphere.position.set(item.a, item.l, item.b);
+                sphere.userData = { ...item };
+                
+                scene.add(sphere);
+                points.push(sphere);
+            });
+
+            window.addEventListener('resize', onWindowResize, false);
+            window.addEventListener('mousemove', onMouseMove, false);
+            
+            animate();
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function onMouseMove(event) {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            screenX = event.clientX;
+            screenY = event.clientY;
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(points);
+            const tooltip = document.getElementById('tooltip');
+
+            if (intersects.length > 0) {
+                const target = intersects[0].object;
+                const data = target.userData;
+                
+                tooltip.style.display = 'block';
+                tooltip.style.left = (screenX + 20) + 'px';
+                tooltip.style.top = (screenY - 20) + 'px';
+                
+                const rgbLabel = `rgb(${Math.round(target.material.color.r*255)}, ${Math.round(target.material.color.g*255)}, ${Math.round(target.material.color.b*255)})`;
+                
+                tooltip.innerHTML = `
+                    <div class="flex flex-col gap-1 mb-3">
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 rounded-md border border-white/20 shadow-sm" style="background-color:${rgbLabel}"></div>
+                            <span class="font-bold text-[15px] text-white">${data.name}</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 mt-0.5">
+                            <span class="px-1.5 py-0.5 rounded bg-white/10 text-white/60 text-[10px] font-mono tracking-wider">CODE</span>
+                            <span class="font-semibold text-blue-400 font-mono text-xs">${data.code}</span>
+                        </div>
+                    </div>
+                    <div class="space-y-1.5 opacity-80 text-[11px] font-mono border-t border-white/5 pt-2">
+                        <div class="flex justify-between gap-8 text-slate-400"><span>L* (Lightness)</span> <span class="text-white">${data.l.toFixed(2)}</span></div>
+                        <div class="flex justify-between gap-8 text-slate-400"><span>a* (Red/Green)</span> <span class="text-white">${data.a.toFixed(2)}</span></div>
+                        <div class="flex justify-between gap-8 text-slate-400"><span>b* (Yell/Blue)</span> <span class="text-white">${data.b.toFixed(2)}</span></div>
+                    </div>
+                    <div class="mt-2 text-right text-[9px] text-slate-600">ID: #${data.id}</div>
+                `;
+
+                points.forEach(p => p.scale.lerp(new THREE.Vector3(1, 1, 1), 0.15));
+                target.scale.lerp(new THREE.Vector3(1.8, 1.8, 1.8), 0.25);
+            } else {
+                tooltip.style.display = 'none';
+                points.forEach(p => p.scale.lerp(new THREE.Vector3(1, 1, 1), 0.1));
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
