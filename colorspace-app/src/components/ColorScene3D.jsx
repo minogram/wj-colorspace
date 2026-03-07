@@ -2,15 +2,16 @@ import { useRef, useState, useCallback, useMemo } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls, Text, Line } from '@react-three/drei'
 import * as THREE from 'three'
-import { labToRgb, labToRgbStr, getTone } from '../utils/colorUtils.js'
+import { labToRgb, labToHex, labToRgbStr, getTone } from '../utils/colorUtils.js'
 
 // ── Individual Color Sphere ──────────────────────────────────────
 function ColorSphere({ item, isSelected, isHovered, onSelect, onHover, scale = 1 }) {
   const meshRef = useRef()
   const [localHover, setLocalHover] = useState(false)
 
-  const [r, g, b] = useMemo(() => labToRgb(item.l, item.a, item.b), [item.l, item.a, item.b])
-  const color = useMemo(() => new THREE.Color(r, g, b), [r, g, b])
+  const hex = useMemo(() => labToHex(item.l, item.a, item.b), [item.l, item.a, item.b])
+  // THREE.Color from hex correctly interprets sRGB (gamma-corrected) values
+  const color = useMemo(() => new THREE.Color(hex), [hex])
 
   const targetScale = isSelected ? 2.2 : (isHovered || localHover) ? 1.7 : 1.0
   const currentScale = useRef(1.0)
@@ -39,10 +40,10 @@ function ColorSphere({ item, isSelected, isHovered, onSelect, onHover, scale = 1
       <sphereGeometry args={[2.4, 32, 32]} />
       <meshStandardMaterial
         color={color}
-        roughness={0.72}
+        roughness={0.65}
         metalness={0}
         emissive={color}
-        emissiveIntensity={isSelected ? 0.7 : isHovered || localHover ? 0.55 : 0.38}
+        emissiveIntensity={isSelected ? 0.6 : isHovered || localHover ? 0.45 : 0.28}
       />
     </mesh>
   )
@@ -254,6 +255,11 @@ export default function ColorScene3D({
       <Canvas
         camera={{ position: [120, 80, 160], fov: 55, near: 1, far: 1500 }}
         dpr={Math.min(window.devicePixelRatio, 2)}
+        gl={{
+          outputColorSpace: THREE.SRGBColorSpace,
+          toneMapping: THREE.ACESFilmicToneMapping,
+          toneMappingExposure: 1.1,
+        }}
         style={{ width: '100%', height: '100%' }}
       >
         <SceneContent
