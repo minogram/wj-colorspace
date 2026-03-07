@@ -39,10 +39,10 @@ function ColorSphere({ item, isSelected, isHovered, onSelect, onHover, scale = 1
       <sphereGeometry args={[2.4, 32, 32]} />
       <meshStandardMaterial
         color={color}
-        roughness={0.88}
+        roughness={0.72}
         metalness={0}
         emissive={color}
-        emissiveIntensity={isSelected ? 0.22 : isHovered || localHover ? 0.14 : 0.04}
+        emissiveIntensity={isSelected ? 0.7 : isHovered || localHover ? 0.55 : 0.38}
       />
     </mesh>
   )
@@ -123,10 +123,10 @@ function SceneContent({
       <color attach="background" args={['#0a0f1e']} />
       <fog attach="fog" args={['#0a0f1e', 300, 700]} />
 
-      <ambientLight intensity={1.1} />
-      <directionalLight position={[150, 250, 150]} intensity={0.55} />
-      <directionalLight position={[-150, -100, -150]} intensity={0.2} color="#4f46e5" />
-      <pointLight position={[0, 100, 0]} intensity={0.25} color="#6366f1" distance={300} />
+      <ambientLight intensity={0.55} />
+      <directionalLight position={[150, 250, 150]} intensity={0.9} />
+      <directionalLight position={[-150, -100, -150]} intensity={0.15} color="#4f46e5" />
+      <pointLight position={[0, 100, 0]} intensity={0.2} color="#ffffff" distance={300} />
 
       <OrbitControls
         ref={orbitRef}
