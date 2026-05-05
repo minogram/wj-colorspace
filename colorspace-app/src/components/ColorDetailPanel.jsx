@@ -21,7 +21,7 @@ export default function ColorDetailPanel({ color, lang, onClose, onHighlight, is
         bottom: 60,
         left: 0,
         right: 0,
-        maxHeight: '60vh',
+        maxHeight: 'calc(100dvh - 120px)',
         borderRadius: '16px 16px 0 0',
         background: 'rgba(13,21,37,0.98)',
         border: 'none',
@@ -29,6 +29,7 @@ export default function ColorDetailPanel({ color, lang, onClose, onHighlight, is
         boxShadow: '0 -12px 40px rgba(0,0,0,0.7)',
         zIndex: 48,
         overflowY: 'auto',
+        overscrollBehavior: 'contain',
       }
     : styles.panel
 
@@ -73,19 +74,10 @@ export default function ColorDetailPanel({ color, lang, onClose, onHighlight, is
             onCopy={() => copyToClipboard(hex)}
           />
           <ValueItem
-            label="L* (밝기)"
-            value={color.l?.toFixed(3)}
+            label="RGB"
+            value={rgbStr}
             mono
-          />
-          <ValueItem
-            label="a* (녹-적)"
-            value={color.a?.toFixed(3)}
-            mono
-          />
-          <ValueItem
-            label="b* (청-황)"
-            value={color.b?.toFixed(3)}
-            mono
+            onCopy={() => copyToClipboard(rgbStr)}
           />
         </div>
 
@@ -118,12 +110,6 @@ export default function ColorDetailPanel({ color, lang, onClose, onHighlight, is
 
         {/* Actions */}
         <div style={styles.actions}>
-          <button style={styles.actionBtn} onClick={() => copyToClipboard(hex)} title="HEX 복사">
-            HEX 복사
-          </button>
-          <button style={styles.actionBtn} onClick={() => copyToClipboard(rgbStr)} title="RGB 복사">
-            RGB 복사
-          </button>
           <button
             style={{ ...styles.actionBtn, ...styles.highlightBtn }}
             onClick={onHighlight}
@@ -294,12 +280,10 @@ const styles = {
   },
   actions: {
     display: 'flex',
-    flexWrap: 'wrap',
     gap: 6,
   },
   actionBtn: {
-    flex: 1,
-    minWidth: 110,
+    width: '100%',
     padding: '9px 10px',
     borderRadius: 7,
     cursor: 'pointer',
@@ -315,6 +299,5 @@ const styles = {
     background: 'rgba(99,102,241,0.12)',
     border: '1px solid rgba(99,102,241,0.3)',
     color: '#a5b4fc',
-    flexBasis: '100%',
   },
 }
