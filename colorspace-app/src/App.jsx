@@ -1,27 +1,107 @@
-import { useState, useMemo, useCallback } from 'react'
+import { Suspense, lazy, useState, useMemo, useCallback, useEffect } from 'react'
 import { colorData } from './colorData.js'
 import { getTone, getHue, TONE_INFO } from './utils/colorUtils.js'
 import { useIsMobile } from './hooks/useIsMobile.js'
-import ColorScene3D from './components/ColorScene3D.jsx'
-import SidePanel from './components/SidePanel.jsx'
-import ColorDetailPanel from './components/ColorDetailPanel.jsx'
+import OfflineExperiencePanel from './components/OfflineExperiencePanel.jsx'
+import PwaInstallCard from './components/PwaInstallCard.jsx'
 
 const ALL_TONES = Object.keys(TONE_INFO)
+const VIEW_STATE_KEY = 'wj-colorspace:view-state'
+const ColorScene3D = lazy(() => import('./components/ColorScene3D.jsx'))
+const SidePanel = lazy(() => import('./components/SidePanel.jsx'))
+const ColorDetailPanel = lazy(() => import('./components/ColorDetailPanel.jsx'))
+
+function readStoredViewState() {
+  if (typeof window === 'undefined') return null
+
+  try {
+    const raw = window.localStorage.getItem(VIEW_STATE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+
+    return {
+      selectedColorId: typeof parsed.selectedColorId === 'number' ? parsed.selectedColorId : null,
+      searchQuery: typeof parsed.searchQuery === 'string' ? parsed.searchQuery : '',
+      activeTones: Array.isArray(parsed.activeTones) ? parsed.activeTones.filter(tone => ALL_TONES.includes(tone)) : null,
+      activeHues: Array.isArray(parsed.activeHues) ? parsed.activeHues.filter(Boolean) : null,
+      autoRotate: Boolean(parsed.autoRotate),
+      showAxes: parsed.showAxes !== false,
+      showGrid: parsed.showGrid !== false,
+      lang: parsed.lang === 'en' ? 'en' : 'ko',
+      sidebarOpen: parsed.sidebarOpen !== false,
+    }
+  } catch {
+    return null
+  }
+}
+
+function restoreSelectedColor(selectedColorId) {
+  if (typeof selectedColorId !== 'number') return null
+  return colorData.find(color => color.id === selectedColorId) ?? null
+}
 
 export default function App() {
   const isMobile = useIsMobile()
+  const [initialViewState] = useState(() => readStoredViewState())
 
-  const [selectedColor, setSelectedColor] = useState(null)
+  const [selectedColor, setSelectedColor] = useState(() => restoreSelectedColor(initialViewState?.selectedColorId))
   const [hoveredColor, setHoveredColor] = useState(null)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [activeTones, setActiveTones] = useState(new Set(ALL_TONES))
-  const [activeHues, setActiveHues] = useState(null)
-  const [autoRotate, setAutoRotate] = useState(false)
-  const [showAxes, setShowAxes] = useState(true)
-  const [showGrid, setShowGrid] = useState(true)
-  const [lang, setLang] = useState('ko')
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [searchQuery, setSearchQuery] = useState(() => initialViewState?.searchQuery ?? '')
+  const [activeTones, setActiveTones] = useState(() => {
+    if (initialViewState?.activeTones?.length) {
+      return new Set(initialViewState.activeTones)
+    }
+
+    return new Set(ALL_TONES)
+  })
+  const [activeHues, setActiveHues] = useState(() => {
+    if (initialViewState?.activeHues?.length) {
+      return new Set(initialViewState.activeHues)
+    }
+
+    return null
+  })
+  const [autoRotate, setAutoRotate] = useState(() => initialViewState?.autoRotate ?? false)
+  const [showAxes, setShowAxes] = useState(() => initialViewState?.showAxes ?? true)
+  const [showGrid, setShowGrid] = useState(() => initialViewState?.showGrid ?? true)
+  const [lang, setLang] = useState(() => initialViewState?.lang ?? 'ko')
+  const [sidebarOpen, setSidebarOpen] = useState(() => initialViewState?.sidebarOpen ?? true)
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
+  const [isOnline, setIsOnline] = useState(() => {
+    if (typeof window === 'undefined') return true
+    return window.navigator.onLine
+  })
+  const [restoredFromLastView] = useState(() => Boolean(initialViewState))
+
+  useEffect(() => {
+    const handleConnectionChange = () => {
+      setIsOnline(window.navigator.onLine)
+    }
+
+    window.addEventListener('online', handleConnectionChange)
+    window.addEventListener('offline', handleConnectionChange)
+
+    return () => {
+      window.removeEventListener('online', handleConnectionChange)
+      window.removeEventListener('offline', handleConnectionChange)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    window.localStorage.setItem(VIEW_STATE_KEY, JSON.stringify({
+      selectedColorId: selectedColor?.id ?? null,
+      searchQuery,
+      activeTones: Array.from(activeTones),
+      activeHues: activeHues ? Array.from(activeHues) : null,
+      autoRotate,
+      showAxes,
+      showGrid,
+      lang,
+      sidebarOpen,
+    }))
+  }, [selectedColor, searchQuery, activeTones, activeHues, autoRotate, showAxes, showGrid, lang, sidebarOpen])
 
   const filteredData = useMemo(() => {
     return colorData.filter(c => {
@@ -76,24 +156,50 @@ export default function App() {
     setActiveHues(new Set([hue]))
   }, [])
 
+  const resetView = useCallback(() => {
+    setSelectedColor(null)
+    setSearchQuery('')
+    setActiveTones(new Set(ALL_TONES))
+    setActiveHues(null)
+    setAutoRotate(false)
+    setShowAxes(true)
+    setShowGrid(true)
+  }, [])
+
   /* ── MOBILE LAYOUT ── */
   if (isMobile) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', width: '100vw', height: '100vh', overflow: 'hidden', position: 'relative' }}>
+        <PwaInstallCard isMobile selectedColor={selectedColor} />
+        <OfflineExperiencePanel
+          isMobile
+          isOnline={isOnline}
+          restoredFromLastView={restoredFromLastView}
+          selectedColor={selectedColor}
+          filteredCount={filteredData.length}
+          totalCount={colorData.length}
+          activeToneCount={activeTones.size}
+          activeHueCount={activeHues?.size ?? 0}
+          hasSearch={Boolean(searchQuery.trim())}
+          onResetView={resetView}
+          onClearSelection={() => setSelectedColor(null)}
+        />
         <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-          <ColorScene3D
-            data={filteredData}
-            allData={colorData}
-            selected={selectedColor}
-            hovered={hoveredColor}
-            onSelect={handleSelect}
-            onHover={setHoveredColor}
-            autoRotate={autoRotate}
-            showAxes={showAxes}
-            showGrid={showGrid}
-            lang={lang}
-            isMobile
-          />
+          <Suspense fallback={<SceneFallback isMobile />}>
+            <ColorScene3D
+              data={filteredData}
+              allData={colorData}
+              selected={selectedColor}
+              hovered={hoveredColor}
+              onSelect={handleSelect}
+              onHover={setHoveredColor}
+              autoRotate={autoRotate}
+              showAxes={showAxes}
+              showGrid={showGrid}
+              lang={lang}
+              isMobile
+            />
+          </Suspense>
           <div style={mStyles.topBar}>
             <div style={{ pointerEvents: 'none' }}>
               <div style={mStyles.title}>CIELAB 컬러스페이스</div>
@@ -108,20 +214,22 @@ export default function App() {
             </div>
           </div>
           {selectedColor && (
-            <ColorDetailPanel
-              color={selectedColor}
-              lang={lang}
-              isMobile
-              onClose={() => setSelectedColor(null)}
-              onHighlight={() => selectOnly(selectedColor)}
-            />
+            <Suspense fallback={null}>
+              <ColorDetailPanel
+                color={selectedColor}
+                lang={lang}
+                isMobile
+                onClose={() => setSelectedColor(null)}
+                onHighlight={() => selectOnly(selectedColor)}
+              />
+            </Suspense>
           )}
           {/* ── Copyright (mobile) ── */}
           <div style={mStyles.copyright}>
             <div>Copyright 2026 WJ International</div>
             <div>samchun68@naver.com</div>
-            <div>uttu.me</div>
             <div>Open Fashion Alliance</div>
+            <div>uttu.me</div>
           </div>
           {activeHues && !selectedColor && (
             <button style={mStyles.clearBadge} onClick={() => setActiveHues(null)}>
@@ -152,19 +260,21 @@ export default function App() {
             <div style={mStyles.backdrop} onClick={() => setMobileDrawerOpen(false)} />
             <div style={mStyles.drawer}>
               <div style={mStyles.drawerHandle} />
-              <SidePanel
-                data={filteredData}
-                allData={colorData}
-                selected={selectedColor}
-                activeTones={activeTones}
-                searchQuery={searchQuery}
-                lang={lang}
-                isMobile
-                onSearchChange={setSearchQuery}
-                onToneToggle={toggleTone}
-                onToggleAll={toggleAllTones}
-                onSelectColor={handleSelect}
-              />
+              <Suspense fallback={<PanelFallback isMobile />}>
+                <SidePanel
+                  data={filteredData}
+                  allData={colorData}
+                  selected={selectedColor}
+                  activeTones={activeTones}
+                  searchQuery={searchQuery}
+                  lang={lang}
+                  isMobile
+                  onSearchChange={setSearchQuery}
+                  onToneToggle={toggleTone}
+                  onToggleAll={toggleAllTones}
+                  onSelectColor={handleSelect}
+                />
+              </Suspense>
             </div>
           </>
         )}
@@ -175,20 +285,35 @@ export default function App() {
   /* ── DESKTOP LAYOUT ── */
   return (
     <div style={{ display: 'flex', width: '100vw', height: '100vh', overflow: 'hidden', position: 'relative' }}>
+      <PwaInstallCard selectedColor={selectedColor} />
+      <OfflineExperiencePanel
+        isOnline={isOnline}
+        restoredFromLastView={restoredFromLastView}
+        selectedColor={selectedColor}
+        filteredCount={filteredData.length}
+        totalCount={colorData.length}
+        activeToneCount={activeTones.size}
+        activeHueCount={activeHues?.size ?? 0}
+        hasSearch={Boolean(searchQuery.trim())}
+        onResetView={resetView}
+        onClearSelection={() => setSelectedColor(null)}
+      />
       {/* ── 3D Canvas (always full width) ── */}
       <div style={{ flex: 1, position: 'relative' }}>
-        <ColorScene3D
-          data={filteredData}
-          allData={colorData}
-          selected={selectedColor}
-          hovered={hoveredColor}
-          onSelect={handleSelect}
-          onHover={setHoveredColor}
-          autoRotate={autoRotate}
-          showAxes={showAxes}
-          showGrid={showGrid}
-          lang={lang}
-        />
+        <Suspense fallback={<SceneFallback />}>
+          <ColorScene3D
+            data={filteredData}
+            allData={colorData}
+            selected={selectedColor}
+            hovered={hoveredColor}
+            onSelect={handleSelect}
+            onHover={setHoveredColor}
+            autoRotate={autoRotate}
+            showAxes={showAxes}
+            showGrid={showGrid}
+            lang={lang}
+          />
+        </Suspense>
 
         {/* ── Top Bar ── */}
         <div style={styles.topBar}>
@@ -240,18 +365,20 @@ export default function App() {
         <div style={styles.copyright}>
           <div>Copyright 2026 WJ International</div>
           <div>samchun68@naver.com</div>
-          <div>uttu.me</div>
           <div>Open Fashion Alliance</div>
+          <div>uttu.me</div>
         </div>
 
         {/* ── Color Detail Panel (bottom-right) ── */}
         {selectedColor && (
-          <ColorDetailPanel
-            color={selectedColor}
-            lang={lang}
-            onClose={() => setSelectedColor(null)}
-            onHighlight={() => selectOnly(selectedColor)}
-          />
+          <Suspense fallback={null}>
+            <ColorDetailPanel
+              color={selectedColor}
+              lang={lang}
+              onClose={() => setSelectedColor(null)}
+              onHighlight={() => selectOnly(selectedColor)}
+            />
+          </Suspense>
         )}
       </div>
 
@@ -261,21 +388,51 @@ export default function App() {
           position: 'fixed', top: 0, right: 0, width: 320, height: '100vh',
           zIndex: 50, boxShadow: '-8px 0 32px rgba(0,0,0,0.6)',
         }}>
-          <SidePanel
-            data={filteredData}
-            allData={colorData}
-            selected={selectedColor}
-            activeTones={activeTones}
-            searchQuery={searchQuery}
-            lang={lang}
-            onSearchChange={setSearchQuery}
-            onToneToggle={toggleTone}
-            onToggleAll={toggleAllTones}
-            onSelectColor={handleSelect}
-            onClose={() => setSidebarOpen(false)}
-          />
+          <Suspense fallback={<PanelFallback />}>
+            <SidePanel
+              data={filteredData}
+              allData={colorData}
+              selected={selectedColor}
+              activeTones={activeTones}
+              searchQuery={searchQuery}
+              lang={lang}
+              onSearchChange={setSearchQuery}
+              onToneToggle={toggleTone}
+              onToggleAll={toggleAllTones}
+              onSelectColor={handleSelect}
+              onClose={() => setSidebarOpen(false)}
+            />
+          </Suspense>
         </div>
       )}
+    </div>
+  )
+}
+
+function SceneFallback({ isMobile = false }) {
+  return (
+    <div style={{ ...fallbackStyles.scene, paddingBottom: isMobile ? 60 : 0 }}>
+      <div style={fallbackStyles.glow} />
+      <div style={fallbackStyles.label}>Loading 3D Scene</div>
+    </div>
+  )
+}
+
+function PanelFallback({ isMobile = false }) {
+  return (
+    <div style={{ ...fallbackStyles.panel, width: '100%', height: isMobile ? '100%' : '100vh' }}>
+      <div style={fallbackStyles.panelHeader} />
+      <div style={fallbackStyles.panelSearch} />
+      <div style={fallbackStyles.panelGrid}>
+        {Array.from({ length: 8 }).map((_, index) => (
+          <div key={index} style={fallbackStyles.panelChip} />
+        ))}
+      </div>
+      <div style={fallbackStyles.panelList}>
+        {Array.from({ length: 6 }).map((_, index) => (
+          <div key={index} style={fallbackStyles.panelRow} />
+        ))}
+      </div>
     </div>
   )
 }
@@ -303,7 +460,7 @@ function LegendItem({ color, label, secondColor, secondLabel }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         <div style={{ width: 12, height: 2, background: secondColor, borderRadius: 1 }} />
         <div style={{ width: 12, height: 2, background: color, borderRadius: 1 }} />
-        <span style={{ fontSize: 10, color: '#64748b', letterSpacing: '0.03em' }}>
+        <span style={{ fontSize: 12, color: '#64748b', letterSpacing: '0.03em' }}>
           <span style={{ color: secondColor }}>{secondLabel.split('→')[1]?.trim()}</span>
           {' ← '}
           <span style={{ color: '#94a3b8' }}>{label.split(' ')[1]}</span>
@@ -316,7 +473,7 @@ function LegendItem({ color, label, secondColor, secondLabel }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
       <div style={{ width: 24, height: 2, background: color, borderRadius: 1 }} />
-      <span style={{ fontSize: 11, color: '#64748b', letterSpacing: '0.04em' }}>{label}</span>
+      <span style={{ fontSize: 12, color: '#64748b', letterSpacing: '0.04em' }}>{label}</span>
     </div>
   )
 }
@@ -356,14 +513,14 @@ const styles = {
     pointerEvents: 'none',
   },
   title: {
-    fontSize: 22,
+    fontSize: 26,
     fontWeight: 700,
     color: '#f1f5f9',
     letterSpacing: '-0.02em',
     lineHeight: 1.2,
   },
   subtitle: {
-    fontSize: 12,
+    fontSize: 14,
     color: '#475569',
     marginTop: 4,
     letterSpacing: '0.02em',
@@ -393,7 +550,7 @@ const styles = {
     padding: '0 12px',
     borderRadius: 8,
     cursor: 'pointer',
-    fontSize: 12,
+    fontSize: 13,
     fontFamily: 'inherit',
     background: 'rgba(239,68,68,0.15)',
     border: '1px solid rgba(239,68,68,0.4)',
@@ -409,7 +566,7 @@ const styles = {
     background: 'rgba(255,255,255,0.05)',
     border: '1px solid rgba(255,255,255,0.1)',
     color: '#94a3b8',
-    fontSize: 12,
+    fontSize: 14,
     pointerEvents: 'auto',
     flexShrink: 0,
     display: 'flex',
@@ -428,7 +585,7 @@ const styles = {
     zIndex: 10,
   },
   hint: {
-    fontSize: 10,
+    fontSize: 12,
     color: '#64748b',
     marginTop: 4,
     letterSpacing: '0.04em',
@@ -438,7 +595,7 @@ const styles = {
     bottom: 20,
     right: 22,
     textAlign: 'right',
-    fontSize: 11,
+    fontSize: 12,
     lineHeight: 1.6,
     color: 'rgba(148,163,184,0.65)',
     letterSpacing: '0.03em',
@@ -457,10 +614,10 @@ const mStyles = {
     pointerEvents: 'none', zIndex: 10,
   },
   title: {
-    fontSize: 15, fontWeight: 700, color: '#f1f5f9', letterSpacing: '-0.02em',
+    fontSize: 17, fontWeight: 700, color: '#f1f5f9', letterSpacing: '-0.02em',
   },
   subtitle: {
-    fontSize: 11, color: '#475569', marginTop: 2,
+    fontSize: 12, color: '#475569', marginTop: 2,
   },
   topControls: {
     display: 'flex', gap: 6, pointerEvents: 'auto',
@@ -480,7 +637,7 @@ const mStyles = {
   },
   navBtnActive: { color: '#818cf8' },
   navIcon: { fontSize: 18, lineHeight: 1, fontWeight: 700 },
-  navLabel: { fontSize: 10, letterSpacing: '0.04em' },
+  navLabel: { fontSize: 12, letterSpacing: '0.04em' },
   backdrop: {
     position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)',
     zIndex: 40, backdropFilter: 'blur(3px)',
@@ -504,7 +661,7 @@ const mStyles = {
     position: 'absolute',
     bottom: 68,
     left: 14,
-    fontSize: 10,
+    fontSize: 11,
     lineHeight: 1.6,
     color: 'rgba(148,163,184,0.55)',
     letterSpacing: '0.03em',
@@ -514,10 +671,81 @@ const mStyles = {
   },
   clearBadge: {
     position: 'absolute', top: 68, left: '50%', transform: 'translateX(-50%)',
-    padding: '6px 14px', borderRadius: 20, fontSize: 11,
+    padding: '7px 14px', borderRadius: 20, fontSize: 12,
     background: 'rgba(239,68,68,0.2)', border: '1px solid rgba(239,68,68,0.4)',
     color: '#fca5a5', cursor: 'pointer', fontFamily: 'inherit',
     zIndex: 10, pointerEvents: 'auto', whiteSpace: 'nowrap',
     WebkitTapHighlightColor: 'transparent',
+  },
+}
+
+const fallbackStyles = {
+  scene: {
+    position: 'absolute',
+    inset: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: 'radial-gradient(circle at 50% 40%, rgba(14,165,233,0.12), transparent 40%), linear-gradient(180deg, #07111d 0%, #0a0f1e 100%)',
+    overflow: 'hidden',
+  },
+  glow: {
+    position: 'absolute',
+    width: 220,
+    height: 220,
+    borderRadius: '50%',
+    background: 'radial-gradient(circle, rgba(59,130,246,0.32) 0%, rgba(14,165,233,0.14) 32%, rgba(10,15,30,0) 72%)',
+    filter: 'blur(8px)',
+  },
+  label: {
+    position: 'relative',
+    padding: '10px 14px',
+    borderRadius: 999,
+    border: '1px solid rgba(125,211,252,0.2)',
+    background: 'rgba(7,17,29,0.7)',
+    color: '#cbd5e1',
+    fontSize: 12,
+    letterSpacing: '0.14em',
+    textTransform: 'uppercase',
+    backdropFilter: 'blur(10px)',
+  },
+  panel: {
+    background: 'rgba(10,15,28,0.97)',
+    borderLeft: '1px solid rgba(255,255,255,0.1)',
+    padding: 12,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 12,
+  },
+  panelHeader: {
+    height: 22,
+    width: '40%',
+    borderRadius: 10,
+    background: 'rgba(255,255,255,0.08)',
+  },
+  panelSearch: {
+    height: 38,
+    borderRadius: 10,
+    background: 'rgba(255,255,255,0.06)',
+  },
+  panelGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(4, 1fr)',
+    gap: 6,
+  },
+  panelChip: {
+    height: 28,
+    borderRadius: 8,
+    background: 'rgba(255,255,255,0.06)',
+  },
+  panelList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 8,
+  },
+  panelRow: {
+    height: 44,
+    borderRadius: 10,
+    background: 'rgba(255,255,255,0.05)',
   },
 }
