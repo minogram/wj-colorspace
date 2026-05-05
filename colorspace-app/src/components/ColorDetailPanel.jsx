@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { labToRgbStr, labToHex, TONE_INFO, getTone } from '../utils/colorUtils.js'
 
-export default function ColorDetailPanel({ color, lang, onClose, onHighlight, isMobile }) {
+export default function ColorDetailPanel({ color, lang, onClose, onHighlight, isMobile, isHighlightActive = false }) {
   const rgbStr = useMemo(() => labToRgbStr(color.l, color.a, color.b), [color])
   const hex = useMemo(() => labToHex(color.l, color.a, color.b), [color])
   const tone = getTone(color.code)
@@ -119,13 +119,17 @@ export default function ColorDetailPanel({ color, lang, onClose, onHighlight, is
         {/* Actions */}
         <div style={styles.actions}>
           <button style={styles.actionBtn} onClick={() => copyToClipboard(hex)} title="HEX 복사">
-            📋 HEX 복사
+            HEX 복사
           </button>
           <button style={styles.actionBtn} onClick={() => copyToClipboard(rgbStr)} title="RGB 복사">
-            📋 RGB 복사
+            RGB 복사
           </button>
-          <button style={{ ...styles.actionBtn, ...styles.highlightBtn }} onClick={onHighlight} title="같은 색상계열 하이라이트">
-            ✦ 계열 강조
+          <button
+            style={{ ...styles.actionBtn, ...styles.highlightBtn }}
+            onClick={onHighlight}
+            title={isHighlightActive ? '색상 계열 강조 해제' : '같은 색상계열 하이라이트'}
+          >
+            {isHighlightActive ? '✦ 계열 강조 해제' : '✦ 계열 강조'}
           </button>
         </div>
       </div>
@@ -217,7 +221,7 @@ const styles = {
   },
   commonName: {
     fontSize: 14,
-    color: '#64748b',
+    color: '#94a3b8',
     marginTop: 3,
   },
   divider: {
@@ -238,18 +242,18 @@ const styles = {
   },
   valueLabel: {
     fontSize: 12,
-    color: '#475569',
+    color: '#94a3b8',
     flexShrink: 0,
   },
   valueText: {
     fontSize: 12,
-    color: '#94a3b8',
+    color: '#cbd5e1',
     textAlign: 'right',
   },
   copyBtn: {
     background: 'none',
     border: 'none',
-    color: '#475569',
+    color: '#94a3b8',
     cursor: 'pointer',
     fontSize: 13,
     padding: '0 2px',
@@ -263,7 +267,7 @@ const styles = {
   },
   barLabel: {
     fontSize: 11,
-    color: '#334155',
+    color: '#94a3b8',
     width: 78,
     flexShrink: 0,
     letterSpacing: '0.02em',
@@ -282,7 +286,7 @@ const styles = {
   },
   barValue: {
     fontSize: 11,
-    color: '#475569',
+    color: '#cbd5e1',
     fontFamily: 'monospace',
     width: 42,
     textAlign: 'right',
@@ -303,7 +307,7 @@ const styles = {
     fontFamily: 'inherit',
     background: 'rgba(255,255,255,0.04)',
     border: '1px solid rgba(255,255,255,0.08)',
-    color: '#94a3b8',
+    color: '#e2e8f0',
     transition: 'all 0.15s',
     textAlign: 'center',
   },

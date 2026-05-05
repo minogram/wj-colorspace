@@ -1,8 +1,8 @@
-import { useRef, useState, useCallback, useMemo } from 'react'
-import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import { useRef, useState, useMemo } from 'react'
+import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls, Text, Line } from '@react-three/drei'
 import * as THREE from 'three'
-import { labToRgb, labToHex, labToRgbStr, getTone } from '../utils/colorUtils.js'
+import { labToHex } from '../utils/colorUtils.js'
 
 // ── Individual Color Sphere ──────────────────────────────────────
 function ColorSphere({ item, isSelected, isHovered, onSelect, onHover, scale = 1 }) {
@@ -60,8 +60,8 @@ function AxisSystem({ show }) {
       {/* L* axis (Y) - White line, white label */}
       <Line points={[[0, -len + offset, 0], [0, len + offset, 0]]} color="#ffffff" lineWidth={1.5} opacity={0.5} transparent />
       <Text position={[0, len + offset + 10, 0]} fontSize={5} color="#f1f5f9" anchorX="center" font={undefined}>L*</Text>
-      <Text position={[0, -len + offset - 10, 0]} fontSize={3.5} color="#94a3b8" anchorX="center" font={undefined}>0</Text>
-      <Text position={[0, len + offset + 2, 0]} fontSize={3.5} color="#94a3b8" anchorX="center" font={undefined}>100</Text>
+      <Text position={[0, -len + offset - 10, 0]} fontSize={3.5} color="#cbd5e1" anchorX="center" font={undefined}>0</Text>
+      <Text position={[0, len + offset + 2, 0]} fontSize={3.5} color="#cbd5e1" anchorX="center" font={undefined}>100</Text>
 
       {/* a* axis (X) - White line, G=green / R=red labels */}
       <Line points={[[-len, 0, 0], [len, 0, 0]]} color="#ffffff" lineWidth={1.5} opacity={0.5} transparent />
@@ -157,94 +157,6 @@ function SceneContent({
   )
 }
 
-// ── HTML Tooltip Overlay ─────────────────────────────────────────
-function TooltipOverlay({ color, lang }) {
-  if (!color) return null
-
-  const name = lang === 'ko' ? color.nameKo : color.nameEn
-  const commonName = lang === 'ko' ? color.commonKo : color.commonEn
-  const rgbStr = labToRgbStr(color.l, color.a, color.b)
-
-  return (
-    <div style={tooltipStyles.wrap}>
-      <div style={tooltipStyles.swatch(rgbStr)} />
-      <div style={tooltipStyles.body}>
-        <div style={tooltipStyles.code}>{color.code}</div>
-        <div style={tooltipStyles.name}>{name}</div>
-        {commonName && <div style={tooltipStyles.common}>{commonName}</div>}
-        <div style={tooltipStyles.lab}>
-          <span>L* {color.l?.toFixed(2)}</span>
-          <span>a* {color.a?.toFixed(2)}</span>
-          <span>b* {color.b?.toFixed(2)}</span>
-        </div>
-        {color.munsell && <div style={tooltipStyles.munsell}>{color.munsell}</div>}
-      </div>
-    </div>
-  )
-}
-
-const tooltipStyles = {
-  wrap: {
-    position: 'absolute',
-    bottom: 24,
-    right: 24,
-    display: 'flex',
-    alignItems: 'center',
-    gap: 12,
-    background: 'rgba(15,23,42,0.92)',
-    border: '1px solid rgba(255,255,255,0.1)',
-    borderRadius: 12,
-    padding: '12px 16px',
-    backdropFilter: 'blur(12px)',
-    pointerEvents: 'none',
-    zIndex: 20,
-    minWidth: 200,
-    boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
-  },
-  swatch: (bg) => ({
-    width: 44,
-    height: 44,
-    borderRadius: 8,
-    background: bg,
-    border: '1px solid rgba(255,255,255,0.15)',
-    flexShrink: 0,
-  }),
-  body: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 3,
-  },
-  code: {
-    fontFamily: 'monospace',
-    fontSize: 11,
-    color: '#6366f1',
-    letterSpacing: '0.08em',
-    fontWeight: 600,
-  },
-  name: {
-    fontSize: 14,
-    color: '#f1f5f9',
-    fontWeight: 600,
-  },
-  common: {
-    fontSize: 11,
-    color: '#64748b',
-  },
-  lab: {
-    display: 'flex',
-    gap: 8,
-    fontSize: 10,
-    color: '#475569',
-    fontFamily: 'monospace',
-    marginTop: 2,
-  },
-  munsell: {
-    fontSize: 10,
-    color: '#334155',
-    fontFamily: 'monospace',
-  },
-}
-
 // ── Main Export ──────────────────────────────────────────────────
 export default function ColorScene3D({
   data, allData, selected, hovered, onSelect, onHover,
@@ -274,7 +186,6 @@ export default function ColorScene3D({
           lang={lang}
         />
       </Canvas>
-      <TooltipOverlay color={hovered || selected} lang={lang} />
     </div>
   )
 }

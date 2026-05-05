@@ -176,7 +176,7 @@ export default function PwaInstallCard({ isMobile = false, selectedColor = null 
           style={{
             background: 'transparent',
             border: 'none',
-            color: '#94a3b8',
+            color: '#cbd5e1',
             width: 24,
             height: 24,
             cursor: 'pointer',

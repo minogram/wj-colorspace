@@ -37,7 +37,6 @@ export default function SidePanel({
 
       {/* Search */}
       <div style={styles.searchWrap}>
-        <span style={styles.searchIcon}>🔍</span>
         <input
           type="text"
           placeholder="색명, 약호, 먼셀기호 검색..."
@@ -70,8 +69,8 @@ export default function SidePanel({
                   ...styles.toneBtn,
                   background: active ? `${info.color}22` : 'rgba(255,255,255,0.03)',
                   border: `1px solid ${active ? info.color + '66' : 'rgba(255,255,255,0.1)'}`,
-                  color: active ? info.color : '#94a3b8',
-                  opacity: active ? 1 : 0.75,
+                  color: active ? info.color : '#cbd5e1',
+                  opacity: active ? 1 : 0.9,
                 }}
                 title={`${info.label} (${info.labelEn})`}
               >
@@ -177,7 +176,7 @@ const styles = {
     borderRadius: 7,
     background: 'rgba(255,255,255,0.06)',
     border: '1px solid rgba(255,255,255,0.1)',
-    color: '#94a3b8',
+    color: '#cbd5e1',
     fontSize: 14,
     cursor: 'pointer',
     display: 'flex',
@@ -192,18 +191,12 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
   },
-  searchIcon: {
-    position: 'absolute',
-    left: 10,
-    fontSize: 14,
-    pointerEvents: 'none',
-  },
   searchInput: {
     width: '100%',
     background: 'rgba(255,255,255,0.04)',
     border: '1px solid rgba(255,255,255,0.08)',
     borderRadius: 8,
-    padding: '10px 34px 10px 34px',
+    padding: '10px 34px 10px 12px',
     fontSize: 14,
     color: '#e2e8f0',
     fontFamily: 'inherit',
@@ -214,7 +207,7 @@ const styles = {
     right: 8,
     background: 'none',
     border: 'none',
-    color: '#475569',
+    color: '#94a3b8',
     cursor: 'pointer',
     fontSize: 14,
     padding: 2,
@@ -230,7 +223,7 @@ const styles = {
   },
   sectionTitle: {
     fontSize: 12,
-    color: '#475569',
+    color: '#94a3b8',
     textTransform: 'uppercase',
     letterSpacing: '0.06em',
     fontWeight: 600,
@@ -285,7 +278,7 @@ const styles = {
   },
   hueHeader: {
     fontSize: 12,
-    color: '#64748b',
+    color: '#cbd5e1',
     padding: '10px 16px 5px',
     textTransform: 'uppercase',
     letterSpacing: '0.08em',
@@ -296,7 +289,7 @@ const styles = {
   },
   hueCount: {
     fontSize: 11,
-    color: '#475569',
+    color: '#94a3b8',
     background: 'rgba(255,255,255,0.05)',
     border: '1px solid rgba(255,255,255,0.08)',
     borderRadius: 10,
@@ -340,20 +333,20 @@ const styles = {
   },
   rowCode: {
     fontSize: 12,
-    color: '#94a3b8',
+    color: '#cbd5e1',
     fontFamily: 'monospace',
     marginTop: 1,
   },
   rowLab: {
     fontSize: 11,
-    color: '#64748b',
+    color: '#94a3b8',
     fontFamily: 'monospace',
     flexShrink: 0,
   },
   empty: {
     padding: '32px 16px',
     textAlign: 'center',
-    color: '#334155',
+    color: '#94a3b8',
     fontSize: 14,
   },
 }

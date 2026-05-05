@@ -1,42 +1,26 @@
-<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="64" height="64" rx="18" fill="url(#bg)"/>
-  <rect x="4" y="4" width="56" height="56" rx="14" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
-  <g filter="url(#shadow)">
-    <rect x="18" y="18" width="22" height="28" rx="8" transform="rotate(-18 18 18)" fill="url(#chipWarm)"/>
-    <rect x="27" y="17" width="20" height="26" rx="7.5" transform="rotate(12 27 17)" fill="url(#chipCool)"/>
-    <rect x="22" y="28" width="21" height="13" rx="6.5" fill="#F8FAFC" fill-opacity="0.9"/>
-  </g>
-  <path d="M25 35.5C28.3 32.5 34.4 31 39 31.4" stroke="#0F172A" stroke-width="1.8" stroke-linecap="round" opacity="0.72"/>
-  <circle cx="28.5" cy="25" r="3.5" fill="#F97316" fill-opacity="0.92"/>
-  <circle cx="34.2" cy="23.8" r="3.5" fill="#FB7185" fill-opacity="0.92"/>
-  <circle cx="40.8" cy="25.2" r="3.5" fill="#22C55E" fill-opacity="0.92"/>
-  <circle cx="31" cy="30.7" r="3.5" fill="#FACC15" fill-opacity="0.94"/>
-  <circle cx="37.2" cy="30.4" r="3.5" fill="#38BDF8" fill-opacity="0.94"/>
+<svg width="64" height="64" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="bg" x1="7" y1="6" x2="57" y2="58" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#09111F"/>
-      <stop offset="0.52" stop-color="#101C34"/>
-      <stop offset="1" stop-color="#060C18"/>
+    <linearGradient id="grad-ab_pos" x1="96%" y1="50%" x2="50%" y2="4%">
+      <stop offset="0%" stop-color="#FF0000" />
+      <stop offset="100%" stop-color="#FFFF00" />
     </linearGradient>
-    <linearGradient id="chipWarm" x1="19.5" y1="19" x2="39.5" y2="42" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#FDE68A"/>
-      <stop offset="0.45" stop-color="#FB7185"/>
-      <stop offset="1" stop-color="#F97316"/>
+    <linearGradient id="grad-ba_neg" x1="50%" y1="4%" x2="4%" y2="49.99999999999999%">
+      <stop offset="0%" stop-color="#FFFF00" />
+      <stop offset="100%" stop-color="#00FF00" />
     </linearGradient>
-    <linearGradient id="chipCool" x1="29" y1="18" x2="46.5" y2="41" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#93C5FD"/>
-      <stop offset="0.48" stop-color="#38BDF8"/>
-      <stop offset="1" stop-color="#8B5CF6"/>
+    <linearGradient id="grad-ab_neg" x1="4%" y1="49.99999999999999%" x2="49.99999999999999%" y2="96%">
+      <stop offset="0%" stop-color="#00FF00" />
+      <stop offset="100%" stop-color="#0000FF" />
     </linearGradient>
-    <filter id="shadow" x="11" y="11" width="42" height="42" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
-      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
-      <feOffset dy="4"/>
-      <feGaussianBlur stdDeviation="3"/>
-      <feComposite in2="hardAlpha" operator="out"/>
-      <feColorMatrix type="matrix" values="0 0 0 0 0.0196078 0 0 0 0 0.0666667 0 0 0 0 0.14902 0 0 0 0.36 0"/>
-      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_0_1"/>
-      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_0_1" result="shape"/>
-    </filter>
+    <linearGradient id="grad-ba_pos" x1="49.99999999999999%" y1="96%" x2="96%" y2="50.000000000000014%">
+      <stop offset="0%" stop-color="#0000FF" />
+      <stop offset="100%" stop-color="#FF0000" />
+    </linearGradient>
   </defs>
+  <g>
+    <path d="M 96 50 A 46 46 0 0 0 50 4 L 50 21 A 29 29 0 0 1 79 50 Z" fill="url(#grad-ab_pos)" />
+    <path d="M 50 4 A 46 46 0 0 0 4 49.99999999999999 L 21 50 A 29 29 0 0 1 50 21 Z" fill="url(#grad-ba_neg)" />
+    <path d="M 4 49.99999999999999 A 46 46 0 0 0 49.99999999999999 96 L 49.99999999999999 79 A 29 29 0 0 1 21 50 Z" fill="url(#grad-ab_neg)" />
+    <path d="M 49.99999999999999 96 A 46 46 0 0 0 96 50.000000000000014 L 79 50.00000000000001 A 29 29 0 0 1 49.99999999999999 79 Z" fill="url(#grad-ba_pos)" />
+  </g>
 </svg>

@@ -150,11 +150,22 @@ export default function App() {
     )
   }, [])
 
-  const selectOnly = useCallback((color) => {
+  const toggleHueHighlight = useCallback((color) => {
     setSelectedColor(color)
     const hue = getHue(color.code)
-    setActiveHues(new Set([hue]))
+    setActiveHues(prev => {
+      if (prev?.size === 1 && prev.has(hue)) {
+        return null
+      }
+
+      return new Set([hue])
+    })
   }, [])
+
+  const isSelectedHueHighlighted = useMemo(() => {
+    if (!selectedColor || !activeHues || activeHues.size !== 1) return false
+    return activeHues.has(getHue(selectedColor.code))
+  }, [selectedColor, activeHues])
 
   const resetView = useCallback(() => {
     setSelectedColor(null)
@@ -208,6 +219,11 @@ export default function App() {
             <div style={mStyles.topControls}>
               <MobileToggle active={autoRotate} onClick={() => setAutoRotate(v => !v)}>&#8635;</MobileToggle>
               <MobileToggle active={showAxes} onClick={() => setShowAxes(v => !v)}>&#8862;</MobileToggle>
+              {activeHues && (
+                <MobileToggle active onClick={() => setActiveHues(null)} title="계열강조 해제">
+                  ✦
+                </MobileToggle>
+              )}
               <MobileToggle active={lang === 'en'} onClick={() => setLang(v => v === 'ko' ? 'en' : 'ko')}>
                 {lang === 'ko' ? 'KO' : 'EN'}
               </MobileToggle>
@@ -220,7 +236,8 @@ export default function App() {
                 lang={lang}
                 isMobile
                 onClose={() => setSelectedColor(null)}
-                onHighlight={() => selectOnly(selectedColor)}
+                onHighlight={() => toggleHueHighlight(selectedColor)}
+                isHighlightActive={isSelectedHueHighlighted}
               />
             </Suspense>
           )}
@@ -231,11 +248,6 @@ export default function App() {
             <div>Open Fashion Alliance</div>
             <div>uttu.me</div>
           </div>
-          {activeHues && !selectedColor && (
-            <button style={mStyles.clearBadge} onClick={() => setActiveHues(null)}>
-              계열 강조 해제
-            </button>
-          )}
         </div>
 
         <div style={mStyles.bottomNav}>
@@ -298,8 +310,15 @@ export default function App() {
         onResetView={resetView}
         onClearSelection={() => setSelectedColor(null)}
       />
-      {/* ── 3D Canvas (always full width) ── */}
-      <div style={{ flex: 1, position: 'relative' }}>
+      {/* ── 3D Canvas (keep visible center aligned when overlays are open) ── */}
+      <div
+        style={{
+          position: 'relative',
+          width: sidebarOpen ? 'max(0px, calc(100vw - 320px))' : '100vw',
+          height: '100vh',
+          flexShrink: 0,
+        }}
+      >
         <Suspense fallback={<SceneFallback />}>
           <ColorScene3D
             data={filteredData}
@@ -334,14 +353,14 @@ export default function App() {
             <ToggleBtn active={showGrid} onClick={() => setShowGrid(v => !v)} title="그리드 표시">
               ⊟
             </ToggleBtn>
+            {activeHues && (
+              <ToggleBtn active onClick={() => setActiveHues(null)} title="계열강조 해제">
+                ✦
+              </ToggleBtn>
+            )}
             <ToggleBtn active={lang === 'en'} onClick={() => setLang(v => v === 'ko' ? 'en' : 'ko')} title="언어 전환">
               {lang === 'ko' ? 'KO' : 'EN'}
             </ToggleBtn>
-            {activeHues && (
-              <button style={styles.clearBtn} onClick={() => setActiveHues(null)}>
-                하이라이트 해제
-              </button>
-            )}
           </div>
 
           <button
@@ -376,7 +395,8 @@ export default function App() {
               color={selectedColor}
               lang={lang}
               onClose={() => setSelectedColor(null)}
-              onHighlight={() => selectOnly(selectedColor)}
+              onHighlight={() => toggleHueHighlight(selectedColor)}
+              isHighlightActive={isSelectedHueHighlighted}
             />
           </Suspense>
         )}
@@ -446,7 +466,7 @@ function ToggleBtn({ active, onClick, title, children }) {
         ...styles.iconBtn,
         background: active ? 'rgba(99,102,241,0.3)' : 'rgba(255,255,255,0.05)',
         border: `1px solid ${active ? 'rgba(99,102,241,0.6)' : 'rgba(255,255,255,0.1)'}`,
-        color: active ? '#a5b4fc' : '#94a3b8',
+        color: active ? '#a5b4fc' : '#cbd5e1',
       }}
     >
       {children}
@@ -460,10 +480,10 @@ function LegendItem({ color, label, secondColor, secondLabel }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         <div style={{ width: 12, height: 2, background: secondColor, borderRadius: 1 }} />
         <div style={{ width: 12, height: 2, background: color, borderRadius: 1 }} />
-        <span style={{ fontSize: 12, color: '#64748b', letterSpacing: '0.03em' }}>
+        <span style={{ fontSize: 12, color: '#cbd5e1', letterSpacing: '0.03em' }}>
           <span style={{ color: secondColor }}>{secondLabel.split('→')[1]?.trim()}</span>
           {' ← '}
-          <span style={{ color: '#94a3b8' }}>{label.split(' ')[1]}</span>
+          <span style={{ color: '#e2e8f0' }}>{label.split(' ')[1]}</span>
           {' → '}
           <span style={{ color }}>{label.split('→')[1]?.trim()}</span>
         </span>
@@ -473,7 +493,7 @@ function LegendItem({ color, label, secondColor, secondLabel }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
       <div style={{ width: 24, height: 2, background: color, borderRadius: 1 }} />
-      <span style={{ fontSize: 12, color: '#64748b', letterSpacing: '0.04em' }}>{label}</span>
+      <span style={{ fontSize: 12, color: '#cbd5e1', letterSpacing: '0.04em' }}>{label}</span>
     </div>
   )
 }
@@ -486,7 +506,7 @@ function MobileToggle({ active, onClick, children }) {
         width: 40, height: 40, borderRadius: 10,
         background: active ? 'rgba(99,102,241,0.35)' : 'rgba(255,255,255,0.07)',
         border: '1px solid ' + (active ? 'rgba(99,102,241,0.6)' : 'rgba(255,255,255,0.12)'),
-        color: active ? '#a5b4fc' : '#94a3b8',
+        color: active ? '#a5b4fc' : '#cbd5e1',
         fontSize: 15, cursor: 'pointer', fontFamily: 'inherit',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         WebkitTapHighlightColor: 'transparent',
@@ -521,7 +541,7 @@ const styles = {
   },
   subtitle: {
     fontSize: 14,
-    color: '#475569',
+    color: '#94a3b8',
     marginTop: 4,
     letterSpacing: '0.02em',
   },
@@ -565,7 +585,7 @@ const styles = {
     cursor: 'pointer',
     background: 'rgba(255,255,255,0.05)',
     border: '1px solid rgba(255,255,255,0.1)',
-    color: '#94a3b8',
+    color: '#cbd5e1',
     fontSize: 14,
     pointerEvents: 'auto',
     flexShrink: 0,
@@ -586,7 +606,7 @@ const styles = {
   },
   hint: {
     fontSize: 12,
-    color: '#64748b',
+    color: '#cbd5e1',
     marginTop: 4,
     letterSpacing: '0.04em',
   },
@@ -597,7 +617,7 @@ const styles = {
     textAlign: 'right',
     fontSize: 12,
     lineHeight: 1.6,
-    color: 'rgba(148,163,184,0.65)',
+    color: 'rgba(203,213,225,0.82)',
     letterSpacing: '0.03em',
     pointerEvents: 'none',
     zIndex: 10,
@@ -617,7 +637,7 @@ const mStyles = {
     fontSize: 17, fontWeight: 700, color: '#f1f5f9', letterSpacing: '-0.02em',
   },
   subtitle: {
-    fontSize: 12, color: '#475569', marginTop: 2,
+    fontSize: 12, color: '#94a3b8', marginTop: 2,
   },
   topControls: {
     display: 'flex', gap: 6, pointerEvents: 'auto',
@@ -632,7 +652,7 @@ const mStyles = {
     flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
     justifyContent: 'center', gap: 3, padding: '4px 0',
     background: 'none', border: 'none', cursor: 'pointer',
-    color: '#475569', fontFamily: 'inherit', transition: 'color 0.15s',
+    color: '#94a3b8', fontFamily: 'inherit', transition: 'color 0.15s',
     WebkitTapHighlightColor: 'transparent',
   },
   navBtnActive: { color: '#818cf8' },
@@ -663,19 +683,11 @@ const mStyles = {
     left: 14,
     fontSize: 11,
     lineHeight: 1.6,
-    color: 'rgba(148,163,184,0.55)',
+    color: 'rgba(203,213,225,0.78)',
     letterSpacing: '0.03em',
     pointerEvents: 'none',
     zIndex: 10,
     textShadow: '0 1px 4px rgba(0,0,0,0.8)',
-  },
-  clearBadge: {
-    position: 'absolute', top: 68, left: '50%', transform: 'translateX(-50%)',
-    padding: '7px 14px', borderRadius: 20, fontSize: 12,
-    background: 'rgba(239,68,68,0.2)', border: '1px solid rgba(239,68,68,0.4)',
-    color: '#fca5a5', cursor: 'pointer', fontFamily: 'inherit',
-    zIndex: 10, pointerEvents: 'auto', whiteSpace: 'nowrap',
-    WebkitTapHighlightColor: 'transparent',
   },
 }
 

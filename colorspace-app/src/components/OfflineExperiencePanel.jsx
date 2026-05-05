@@ -86,7 +86,7 @@ export default function OfflineExperiencePanel({
         <button
           onClick={() => setDismissed(true)}
           aria-label="dismiss offline panel"
-          style={{ background: 'transparent', border: 'none', color: '#94a3b8', width: 24, height: 24, cursor: 'pointer', fontSize: 18, lineHeight: 1, flexShrink: 0 }}
+          style={{ background: 'transparent', border: 'none', color: '#cbd5e1', width: 24, height: 24, cursor: 'pointer', fontSize: 18, lineHeight: 1, flexShrink: 0 }}
         >
           ×
         </button>
@@ -134,7 +134,7 @@ export default function OfflineExperiencePanel({
 function StatChip({ label, value, accent = false }) {
   return (
       <div style={{ padding: '8px 10px', borderRadius: 16, background: accent ? 'rgba(251,191,36,0.12)' : 'rgba(255,255,255,0.05)', border: `1px solid ${accent ? 'rgba(251,191,36,0.18)' : 'rgba(255,255,255,0.08)'}` }}>
-      <div style={{ fontSize: 11, color: '#94a3b8', letterSpacing: '0.12em', textTransform: 'uppercase' }}>{label}</div>
+      <div style={{ fontSize: 11, color: '#cbd5e1', letterSpacing: '0.12em', textTransform: 'uppercase' }}>{label}</div>
       <div style={{ fontSize: 13, color: '#f8fafc', fontWeight: 700, marginTop: 4 }}>{value}</div>
     </div>
   )
@@ -198,7 +198,7 @@ const styles = {
   },
   previewMetaLabel: {
     fontSize: 11,
-    color: '#94a3b8',
+    color: '#cbd5e1',
     letterSpacing: '0.12em',
     textTransform: 'uppercase',
   },

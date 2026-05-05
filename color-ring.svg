@@ -1,5 +1,6 @@
-<svg width="192" height="192" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="512" height="512" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
+    
     <linearGradient id="grad-ab_pos" x1="96%" y1="50%" x2="50%" y2="4%">
       <stop offset="0%" stop-color="#FF0000" />
       <stop offset="100%" stop-color="#FFFF00" />
