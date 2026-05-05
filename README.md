@@ -4,6 +4,8 @@
 
 WJ International 색상 데이터 130종을 CIELAB(L\* a\* b\*) 3D 공간으로 시각화한 인터랙티브 웹 애플리케이션입니다.
 
+![App Screenshot](screenshot/screenshot.png)
+
 ---
 
 ## 주요 기능
